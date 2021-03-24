@@ -3,20 +3,23 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { portis, web3 } from '../getWeb3';
+import Web3 from 'web3';
+import portis from '../portis';
+import ERC20Contract from '../contracts/ERC20.json';
 
-class TransferPage extends Component {
+export default class PortisPage extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			portis: null,
 			web3: null,
-			accounts: null,
 			contract: null,
 			receiverAddress: '',
 			receiverBalance: 0,
 			senderAddress: '',
 			senderBalance: 0,
+			amount: 0,
+			tokenName: '',
+			tokenSymbol: '',
 		};
 	}
 
@@ -25,23 +28,24 @@ class TransferPage extends Component {
 	};
 
 	checkBalance = async () => {
+		const { web3, senderAddress, receiverAddress, contract } = this.state;
 		let senderBalance = 0;
 		let receiverBalance = 0;
 		let message = '';
 
-		if (web3.utils.isAddress(this.state.senderAddress)) {
-			senderBalance = web3.utils.fromWei(
-				await web3.eth.getBalance(this.state.senderAddress)
-			);
-		} else {
-			message = 'Error: Incorrect ethereum address for the sender';
+		if (senderAddress) {
+			if (web3.utils.isAddress(senderAddress)) {
+				senderBalance = await contract.methods.balanceOf(senderAddress).call();
+			} else {
+				message = 'Error: Incorrect ethereum address for the sender';
+			}
 		}
 
-		if (this.state.receiverAddress) {
-			if (web3.utils.isAddress(this.state.receiverAddress)) {
-				receiverBalance = web3.utils.fromWei(
-					await web3.eth.getBalance(this.state.receiverAddress)
-				);
+		if (receiverAddress) {
+			if (web3.utils.isAddress(receiverAddress)) {
+				receiverBalance = await contract.methods
+					.balanceOf(receiverAddress)
+					.call();
 			} else {
 				message = 'Error: Incorrect ethereum address for the receiver';
 			}
@@ -51,25 +55,32 @@ class TransferPage extends Component {
 	};
 
 	sendTransfer = async () => {
-		if (this.state.senderBalance >= 0) {
+		const {
+			web3,
+			senderAddress,
+			senderBalance,
+			receiverAddress,
+			amount,
+			contract,
+		} = this.state;
+
+		if (senderBalance >= 0) {
 			try {
-				// await TransactionContract.methods
-				// 	.transferFunds(this.state.receiverAddress)
-				// 	.send(
-				// 		{
-				// 			from: this.state.senderAddress,
-				// 			value: web3.utils.toWei(this.state.amount.toString(), 'ether'),
-				// 		},
-				// 		(error, result) => {
-				// 			if (error) {
-				// 				this.setState({ message: 'Error: ' + error.message });
-				// 			} else {
-				// 				this.setState({
-				// 					message: 'Transaction Hash: ' + result,
-				// 				});
-				// 			}
-				// 		}
-				// 	);
+				await contract.methods.transfer(receiverAddress).send(
+					{
+						from: senderAddress,
+						value: web3.utils.toWei(amount.toString(), 'ether'),
+					},
+					(error, result) => {
+						if (error) {
+							this.setState({ message: 'Error: ' + error.message });
+						} else {
+							this.setState({
+								message: 'Transaction Hash: ' + result,
+							});
+						}
+					}
+				);
 			} catch (error) {
 				this.setState({ message: 'Error: The transfer has failed' });
 			}
@@ -82,9 +93,23 @@ class TransferPage extends Component {
 
 	componentDidMount = async () => {
 		try {
-			const accounts = await web3.eth.getAccounts();
+			const web3 = new Web3(portis.provider);
+			const [senderAddress] = await web3.eth.getAccounts();
+			const network = await web3.eth.net.getId();
+			const contract = new web3.eth.Contract(
+				ERC20Contract.abi,
+				ERC20Contract.networks[network].address
+			);
+			const tokenName = await contract.methods.name().call();
+			const tokenSymbol = await contract.methods.symbol().call();
 
-			this.setState({ portis, web3, accounts });
+			this.setState({
+				web3,
+				senderAddress,
+				contract,
+				tokenName,
+				tokenSymbol,
+			});
 		} catch (error) {
 			// Catch any errors for any of the above operations.
 			alert(
@@ -97,6 +122,11 @@ class TransferPage extends Component {
 	render() {
 		return (
 			<>
+				<Row>
+					<Col>
+						<h1>{this.state.tokenName} Token</h1>
+					</Col>
+				</Row>
 				<Row>
 					<Col md={8}>{this.state.message && <b>{this.state.message}</b>}</Col>
 					<Col md={4} className="mb-2">
@@ -116,8 +146,9 @@ class TransferPage extends Component {
 									value={this.state.senderAddress}
 									type="text"
 									className="u-full-width"
-									placeholder="Loading..."
-									disabled
+									placeholder="Enter the sender address"
+									required
+									onChange={this.onChange}
 								/>
 							</Form.Group>
 						</Col>
@@ -154,7 +185,7 @@ class TransferPage extends Component {
 							<Form.Control
 								plaintext
 								readOnly
-								defaultValue={this.state.receiverBalance + ' ETH'}
+								value={`${this.state.senderBalance} ${this.state.tokenSymbol}`}
 							/>
 						</Col>
 						<Col md={3}>
@@ -162,7 +193,7 @@ class TransferPage extends Component {
 							<Form.Control
 								plaintext
 								readOnly
-								defaultValue={this.state.receiverBalance + ' ETH'}
+								value={`${this.state.receiverBalance} ${this.state.tokenSymbol}`}
 							/>
 						</Col>
 					</Row>
@@ -172,7 +203,17 @@ class TransferPage extends Component {
 								Check Balance
 							</Button>
 						</Col>
-						<Col md={6} className="mt-4">
+						<Col md={3} className="mt-4">
+							<Button
+								variant="primary"
+								disabled={!this.state.receiverAddress}
+								onClick={this.sendTransfer}
+								block
+							>
+								Allow
+							</Button>
+						</Col>
+						<Col md={3} className="mt-4">
 							<Button
 								variant="primary"
 								disabled={!this.state.receiverAddress}
@@ -188,5 +229,3 @@ class TransferPage extends Component {
 		);
 	}
 }
-
-export default TransferPage;

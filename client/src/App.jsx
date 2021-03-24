@@ -1,8 +1,8 @@
 import React from 'react';
 import { Container } from 'react-bootstrap';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
-import TransferPage from './pages/TransferPage';
-import AccountPage from './pages/AccountPage';
+import MetaMaskPage from './pages/MetaMaskPage';
+import PoritsPage from './pages/PortisPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -14,11 +14,11 @@ export default function App() {
 			<Header />
 			<Container>
 				<Switch>
-					<Route exact path="/">
-						<TransferPage />
+					<Route exact path="/metamask">
+						<MetaMaskPage />
 					</Route>
-					<Route path="/account">
-						<AccountPage />
+					<Route path="/portis">
+						<PoritsPage />
 					</Route>
 				</Switch>
 			</Container>
