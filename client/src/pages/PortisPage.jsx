@@ -8,7 +8,7 @@ import portis from '../portis';
 import ERC20Contract from '../contracts/ERC20.json';
 import useFormInput from '../components/UseFormInput';
 
-export default function MetaMaskPage() {
+export default function PortisPage() {
 	const [web3] = useState(new Web3(portis.provider));
 	const [contract, setContract] = useState(null);
 	const [receiverAddress, recieverAddressInput] = useFormInput({
