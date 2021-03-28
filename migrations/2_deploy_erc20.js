@@ -5,6 +5,6 @@ module.exports = function (deployer) {
 		ERC20,
 		'TEST',
 		'TC',
-		'0x88cb245f9305a87ebd304b6ef36cbe85e0212e0a'
+		'0x6DcbaFcaaFEBc3e12a4833610511dd26196Aced7'
 	);
 };

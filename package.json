@@ -2,9 +2,12 @@
   "name": "main",
   "version": "0.1.0",
   "private": true,
-  "workspaces": ["client"],
+  "workspaces": [
+    "client"
+  ],
   "dependencies": {
     "@portis/web3": "^3.0.8",
+    "@truffle/hdwallet-provider": "1.2.2",
     "bootstrap": "^4.6.0",
     "react": "^17.0.1",
     "react-bootstrap": "^1.5.2",

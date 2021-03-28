@@ -126,7 +126,7 @@ export default function MetaMaskPage() {
 						}
 					});
 			} catch (error) {
-				setMessage('Error: The transfer has failed ' + error);
+				setMessage('Error: The transfer has failed - ' + error.message);
 			}
 		}
 	}
@@ -144,8 +144,24 @@ export default function MetaMaskPage() {
 						}
 					});
 			} catch (error) {
-				setMessage('Error: The transfer has failed ' + error);
+				setMessage('Error: The transfer has failed - ' + error.message);
 			}
+		}
+	}
+
+	async function receiveAllowance() {
+		try {
+			await contract.methods
+				.transferFrom(senderAddress, receiverAddress, amount)
+				.send({ from: receiverAddress }, (error, result) => {
+					if (error) {
+						setMessage('Error: ' + error.message);
+					} else {
+						setMessage('Transaction Hash: ' + result);
+					}
+				});
+		} catch (error) {
+			setMessage('Error: The transfer has failed - ' + error.message);
 		}
 	}
 
@@ -218,30 +234,41 @@ export default function MetaMaskPage() {
 					<Col md={3} className="mt-4">
 						<Button
 							variant="secondary"
+							disabled={!receiverAddress}
 							onClick={checkAllowance}
 							block
 						>
 							Check Allowance
 						</Button>
 					</Col>
-					<Col md={3} className="mt-4">
+					<Col md={2} className="mt-4">
 						<Button
 							variant="primary"
 							disabled={!receiverAddress}
 							onClick={sendTransfer}
 							block
 						>
-							Send Transfer
+							Transfer
 						</Button>
 					</Col>
-					<Col md={3} className="mt-4">
+					<Col md={2} className="mt-4">
 						<Button
 							variant="primary"
 							disabled={!receiverAddress}
 							onClick={sendApproval}
 							block
 						>
-							Send Approval
+							Approve
+						</Button>
+					</Col>
+					<Col md={2} className="mt-4">
+						<Button
+							variant="primary"
+							disabled={!receiverAddress}
+							onClick={receiveAllowance}
+							block
+						>
+							Withdraw
 						</Button>
 					</Col>
 				</Row>

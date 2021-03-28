@@ -1,4 +1,15 @@
 const path = require('path');
+var Web3 = require('web3');
+var sinelnikovProvider = new Web3.providers.HttpProvider(
+	'https://sinelnikov.ca/ganache'
+);
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+
+const fs = require('fs');
+const mnemonic = fs.readFileSync('.secret').toString().trim();
+if (!mnemonic || mnemonic.split(' ').length !== 12) {
+	throw new Error('unable to retrieve mnemonic from .secret');
+}
 
 module.exports = {
 	// See <http://truffleframework.com/docs/advanced/configuration>
@@ -10,6 +21,18 @@ module.exports = {
 			port: 8545,
 			network_id: '*',
 		},
+		localnet: {
+			provider: sinelnikovProvider,
+			network_id: '*',
+		},
+		// ropsten: {
+		// 	provider: function () {
+		// 		return new HDWalletProvider(
+
+		// 		);
+		// 	},
+		// 	network_id: '*',
+		// },
 	},
 	compilers: {
 		solc: {

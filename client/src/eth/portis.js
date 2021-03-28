@@ -1,7 +1,7 @@
 import Portis from '@portis/web3';
 
 const ganache = {
-	nodeUrl: 'http://localhost:8545',
+	nodeUrl: 'https://sinelnikov.ca/ganache',
 	chainId: 5777,
 };
 

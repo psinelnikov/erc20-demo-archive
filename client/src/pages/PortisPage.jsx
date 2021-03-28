@@ -4,7 +4,7 @@ import Col from 'react-bootstrap/Col';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Web3 from 'web3';
-import portis from '../portis';
+import portis from '../eth/portis';
 import ERC20Contract from '../contracts/ERC20.json';
 import useFormInput from '../components/UseFormInput';
 
@@ -26,6 +26,7 @@ export default function PortisPage() {
 		type: 'text',
 		placeholder: 'Amount to send',
 	});
+	const [allowance, setAllowance] = useState(0);
 	const [tokenName, setTokenName] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [message, setMessage] = useState('');
@@ -62,7 +63,7 @@ export default function PortisPage() {
 	}, [web3.eth, setSenderAddress]);
 
 	function activateMenu() {
-		portis.menu();
+		portis.showPortis();
 	}
 
 	async function checkBalance() {
@@ -90,9 +91,31 @@ export default function PortisPage() {
 			}
 		}
 
-		setMessage(message);
 		setReceiverBalance(receiverBalance);
 		setSenderBalance(senderBalance);
+		setMessage(message);
+	}
+
+	async function checkAllowance() {
+		let allowance = 0;
+		let message = '';
+
+		if (senderAddress && receiverAddress) {
+			if (
+				web3.utils.isAddress(senderAddress) &&
+				web3.utils.isAddress(receiverAddress)
+			) {
+				allowance = await contract.methods
+					.allowance(senderAddress, receiverAddress)
+					.call();
+			} else {
+				message =
+					'Error: Incorrect ethereum address for the sender or receiver';
+			}
+		}
+
+		setAllowance(allowance);
+		setMessage(message);
 	}
 
 	async function sendTransfer() {
@@ -108,8 +131,42 @@ export default function PortisPage() {
 						}
 					});
 			} catch (error) {
-				setMessage('Error: The transfer has failed ' + error);
+				setMessage('Error: The transfer has failed - ' + error.message);
 			}
+		}
+	}
+
+	async function sendApproval() {
+		if (senderBalance >= 0) {
+			try {
+				await contract.methods
+					.approve(receiverAddress, amount)
+					.send({ from: senderAddress }, (error, result) => {
+						if (error) {
+							setMessage('Error: ' + error.message);
+						} else {
+							setMessage('Transaction Hash: ' + result);
+						}
+					});
+			} catch (error) {
+				setMessage('Error: The transfer has failed - ' + error.message);
+			}
+		}
+	}
+
+	async function receiveAllowance() {
+		try {
+			await contract.methods
+				.transferFrom(senderAddress, receiverAddress, amount)
+				.send({ from: receiverAddress }, (error, result) => {
+					if (error) {
+						setMessage('Error: ' + error.message);
+					} else {
+						setMessage('Transaction Hash: ' + result);
+					}
+				});
+		} catch (error) {
+			setMessage('Error: The transfer has failed - ' + error.message);
 		}
 	}
 
@@ -131,13 +188,13 @@ export default function PortisPage() {
 
 			<Form>
 				<Row>
-					<Col md={6}>
+					<Col lg={6}>
 						<Form.Group controlId="formSenderAddress">
 							<Form.Label>Sender Address</Form.Label>
 							{senderAddressInput}
 						</Form.Group>
 					</Col>
-					<Col md={6}>
+					<Col lg={6}>
 						<Form.Group controlId="formReceiverAddress">
 							<Form.Label>Receiver Address</Form.Label>
 							{recieverAddressInput}
@@ -145,7 +202,7 @@ export default function PortisPage() {
 					</Col>
 				</Row>
 				<Row>
-					<Col md={6}>
+					<Col md={3}>
 						<Form.Label>Amount</Form.Label>
 						{amountInput}
 					</Col>
@@ -165,9 +222,17 @@ export default function PortisPage() {
 							value={`${receiverBalance} ${tokenSymbol}`}
 						/>
 					</Col>
+					<Col md={3}>
+						<Form.Label>Allowance</Form.Label>
+						<Form.Control
+							plaintext
+							readOnly
+							value={`${allowance} ${tokenSymbol}`}
+						/>
+					</Col>
 				</Row>
 				<Row>
-					<Col md={6} className="mt-4">
+					<Col md={3} className="mt-4">
 						<Button
 							variant="secondary"
 							onClick={checkBalance}
@@ -178,15 +243,15 @@ export default function PortisPage() {
 					</Col>
 					<Col md={3} className="mt-4">
 						<Button
-							variant="primary"
+							variant="secondary"
 							disabled={!receiverAddress}
-							onClick={sendTransfer}
+							onClick={checkAllowance}
 							block
 						>
-							Allow
+							Check Allowance
 						</Button>
 					</Col>
-					<Col md={3} className="mt-4">
+					<Col md={2} className="mt-4">
 						<Button
 							variant="primary"
 							disabled={!receiverAddress}
@@ -194,6 +259,26 @@ export default function PortisPage() {
 							block
 						>
 							Transfer
+						</Button>
+					</Col>
+					<Col md={2} className="mt-4">
+						<Button
+							variant="primary"
+							disabled={!receiverAddress}
+							onClick={sendApproval}
+							block
+						>
+							Approve
+						</Button>
+					</Col>
+					<Col md={2} className="mt-4">
+						<Button
+							variant="primary"
+							disabled={!receiverAddress}
+							onClick={receiveAllowance}
+							block
+						>
+							Withdraw
 						</Button>
 					</Col>
 				</Row>

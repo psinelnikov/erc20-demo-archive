@@ -13,6 +13,7 @@
 /build
 
 contracts
+.secret
 
 # misc
 .DS_Store
