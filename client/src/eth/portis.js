@@ -5,4 +5,4 @@ const ganache = {
 	chainId: 5777,
 };
 
-export default new Portis(process.env.REACT_APP_PORTIS_API_KEY, ganache);
+export default new Portis(process.env.REACT_APP_PORTIS_API_KEY, 'ropsten');

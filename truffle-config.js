@@ -11,6 +11,8 @@ if (!mnemonic || mnemonic.split(' ').length !== 12) {
 	throw new Error('unable to retrieve mnemonic from .secret');
 }
 
+const infuriaURL = fs.readFileSync('.infura').toString().trim();
+
 module.exports = {
 	// See <http://truffleframework.com/docs/advanced/configuration>
 	// to customize your Truffle configuration!
@@ -25,14 +27,12 @@ module.exports = {
 			provider: sinelnikovProvider,
 			network_id: '*',
 		},
-		// ropsten: {
-		// 	provider: function () {
-		// 		return new HDWalletProvider(
-
-		// 		);
-		// 	},
-		// 	network_id: '*',
-		// },
+		ropsten: {
+			provider: function () {
+				return new HDWalletProvider(mnemonic, infuriaURL);
+			},
+			network_id: 3,
+		},
 	},
 	compilers: {
 		solc: {

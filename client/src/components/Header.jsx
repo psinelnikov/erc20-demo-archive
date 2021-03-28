@@ -8,7 +8,7 @@ export default function Header() {
 	return (
 		<Navbar className="p-4" bg="transparent" expand="lg">
 			<LinkContainer to="/">
-				<Navbar.Brand>ERC-20 Template</Navbar.Brand>
+				<Navbar.Brand>ERC-20 Demo</Navbar.Brand>
 			</LinkContainer>
 			<Navbar.Toggle aria-controls="basic-navbar-nav" />
 			<Navbar.Collapse id="basic-navbar-nav">

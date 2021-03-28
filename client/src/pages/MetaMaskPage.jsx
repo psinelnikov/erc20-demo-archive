@@ -31,35 +31,41 @@ export default function MetaMaskPage() {
 	const [message, setMessage] = useState('');
 
 	useEffect(() => {
-		try {
-			const fetchData = async () => {
+		const fetchData = async () => {
+			try {
 				const [account] = await web3.eth.getAccounts();
 				const network = await web3.eth.net.getId();
 
-				const contract = new web3.eth.Contract(
-					ERC20Contract.abi,
-					ERC20Contract.networks[network].address
+				if (ERC20Contract.networks[network]) {
+					const contract = new web3.eth.Contract(
+						ERC20Contract.abi,
+						ERC20Contract.networks[network].address
+					);
+
+					setContract(contract);
+					setTokenName(await contract.methods.name().call());
+					setTokenSymbol(await contract.methods.symbol().call());
+
+					setSenderAddress(account);
+					setSenderBalance(
+						await contract.methods.balanceOf(account).call()
+					);
+				} else {
+					throw new Error(
+						`Contract does not exist for the ${await web3.eth.net.getNetworkType()} network`
+					);
+				}
+			} catch (error) {
+				// Catch any errors for any of the above operations.
+				alert(
+					`Failed to load web3, accounts, or contract. Check console for details.`
 				);
+				console.error(error);
+			}
+		};
 
-				setContract(contract);
-				setTokenName(await contract.methods.name().call());
-				setTokenSymbol(await contract.methods.symbol().call());
-
-				setSenderAddress(account);
-				setSenderBalance(
-					await contract.methods.balanceOf(account).call()
-				);
-			};
-
-			fetchData();
-		} catch (error) {
-			// Catch any errors for any of the above operations.
-			alert(
-				`Failed to load web3, accounts, or contract. Check console for details.`
-			);
-			console.error(error);
-		}
-	}, [web3.eth, setSenderAddress]);
+		fetchData();
+	}, [web3, setSenderAddress]);
 
 	async function checkBalance() {
 		let senderBalance = 0;
