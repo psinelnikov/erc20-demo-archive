@@ -30,6 +30,9 @@ export default function PortisPage() {
 	const [tokenName, setTokenName] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [message, setMessage] = useState('');
+	const [events, setEvents] = useState([]);
+	const [network, setNetwork] = useState(0);
+	const [networkName, setNetworkName] = useState('undefined');
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -43,7 +46,14 @@ export default function PortisPage() {
 						ERC20Contract.networks[network].address
 					);
 
+					const events = await contract.getPastEvents('allEvents', {
+						fromBlock: 0,
+					});
+
+					setEvents(events);
+					setNetwork(network);
 					setContract(contract);
+					setNetworkName(await web3.eth.net.getNetworkType());
 					setTokenName(await contract.methods.name().call());
 					setTokenSymbol(await contract.methods.symbol().call());
 
@@ -127,15 +137,11 @@ export default function PortisPage() {
 	async function sendTransfer() {
 		if (senderBalance >= 0) {
 			try {
-				await contract.methods
+				const result = await contract.methods
 					.transfer(receiverAddress, amount)
-					.send({ from: senderAddress }, (error, result) => {
-						if (error) {
-							setMessage('Error: ' + error.message);
-						} else {
-							setMessage('Transaction Hash: ' + result);
-						}
-					});
+					.send({ from: senderAddress });
+
+				setMessage('Transaction Hash: ' + result.transactionHash);
 			} catch (error) {
 				setMessage('Error: The transfer has failed - ' + error.message);
 			}
@@ -145,15 +151,11 @@ export default function PortisPage() {
 	async function sendApproval() {
 		if (senderBalance >= 0) {
 			try {
-				await contract.methods
+				const result = await contract.methods
 					.approve(receiverAddress, amount)
-					.send({ from: senderAddress }, (error, result) => {
-						if (error) {
-							setMessage('Error: ' + error.message);
-						} else {
-							setMessage('Transaction Hash: ' + result);
-						}
-					});
+					.send({ from: senderAddress });
+
+				setMessage('Transaction Hash: ' + result.transactionHash);
 			} catch (error) {
 				setMessage('Error: The transfer has failed - ' + error.message);
 			}
@@ -162,15 +164,11 @@ export default function PortisPage() {
 
 	async function receiveAllowance() {
 		try {
-			await contract.methods
+			const result = await contract.methods
 				.transferFrom(senderAddress, receiverAddress, amount)
-				.send({ from: receiverAddress }, (error, result) => {
-					if (error) {
-						setMessage('Error: ' + error.message);
-					} else {
-						setMessage('Transaction Hash: ' + result);
-					}
-				});
+				.send({ from: receiverAddress });
+
+			setMessage('Transaction Hash: ' + result.transactionHash);
 		} catch (error) {
 			setMessage('Error: The transfer has failed - ' + error.message);
 		}
@@ -180,7 +178,9 @@ export default function PortisPage() {
 		<>
 			<Row>
 				<Col>
-					<h1>{tokenName} Token</h1>
+					<div>{networkName}</div>
+					<div>{ERC20Contract.networks[network]?.address}</div>
+					<h1>{tokenName} Token </h1>
 				</Col>
 			</Row>
 			<Row>
@@ -289,6 +289,24 @@ export default function PortisPage() {
 					</Col>
 				</Row>
 			</Form>
+			<Row className="mt-4">
+				<h1>History</h1>
+				<div>
+					<ul>
+						{events.map((event) => (
+							<li key={event.id}>
+								{event.event} from{' '}
+								{event.returnValues.from ||
+									event.returnValues.owner}{' '}
+								to{' '}
+								{event.returnValues.to ||
+									event.returnValues.spender}
+								, Value: {event.returnValues.value}
+							</li>
+						))}
+					</ul>
+				</div>
+			</Row>
 		</>
 	);
 }
