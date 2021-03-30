@@ -7,6 +7,7 @@ import Web3 from 'web3';
 import portis from '../eth/portis';
 import ERC20Contract from '../contracts/ERC20.json';
 import useFormInput from '../components/UseFormInput';
+import History from '../components/History';
 
 export default function PortisPage() {
 	const [web3] = useState(new Web3(portis.provider));
@@ -30,7 +31,6 @@ export default function PortisPage() {
 	const [tokenName, setTokenName] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [message, setMessage] = useState('');
-	const [events, setEvents] = useState([]);
 	const [network, setNetwork] = useState(0);
 	const [networkName, setNetworkName] = useState('undefined');
 
@@ -46,11 +46,6 @@ export default function PortisPage() {
 						ERC20Contract.networks[network].address
 					);
 
-					const events = await contract.getPastEvents('allEvents', {
-						fromBlock: 0,
-					});
-
-					setEvents(events);
 					setNetwork(network);
 					setContract(contract);
 					setNetworkName(await web3.eth.net.getNetworkType());
@@ -180,12 +175,14 @@ export default function PortisPage() {
 				<Col>
 					<div>{networkName}</div>
 					<div>{ERC20Contract.networks[network]?.address}</div>
-					<h1>{tokenName} Token </h1>
+					<h1>{tokenName} Token</h1>
 				</Col>
 			</Row>
 			<Row>
-				<Col md={8}>{message && <b>{message}</b>}</Col>
-				<Col md={4} className="mb-2">
+				<Col md={9}>
+					<b>{message}</b>
+				</Col>
+				<Col md={3} className="mb-2">
 					<Button variant="secondary" onClick={activateMenu} block>
 						Portis Menu
 					</Button>
@@ -289,24 +286,7 @@ export default function PortisPage() {
 					</Col>
 				</Row>
 			</Form>
-			<Row className="mt-4">
-				<h1>History</h1>
-				<div>
-					<ul>
-						{events.map((event) => (
-							<li key={event.id}>
-								{event.event} from{' '}
-								{event.returnValues.from ||
-									event.returnValues.owner}{' '}
-								to{' '}
-								{event.returnValues.to ||
-									event.returnValues.spender}
-								, Value: {event.returnValues.value}
-							</li>
-						))}
-					</ul>
-				</div>
-			</Row>
+			<History contract={contract} />
 		</>
 	);
 }

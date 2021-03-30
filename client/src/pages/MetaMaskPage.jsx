@@ -6,6 +6,7 @@ import Form from 'react-bootstrap/Form';
 import Web3 from 'web3';
 import ERC20Contract from '../contracts/ERC20.json';
 import useFormInput from '../components/UseFormInput';
+import History from '../components/History';
 
 export default function MetaMaskPage() {
 	const [web3] = useState(new Web3(window.ethereum));
@@ -29,7 +30,6 @@ export default function MetaMaskPage() {
 	const [tokenName, setTokenName] = useState('');
 	const [tokenSymbol, setTokenSymbol] = useState('');
 	const [message, setMessage] = useState('');
-	const [events, setEvents] = useState([]);
 	const [network, setNetwork] = useState(0);
 	const [networkName, setNetworkName] = useState('undefined');
 
@@ -45,11 +45,6 @@ export default function MetaMaskPage() {
 						ERC20Contract.networks[network].address
 					);
 
-					const events = await contract.getPastEvents('allEvents', {
-						fromBlock: 0,
-					});
-
-					setEvents(events);
 					setNetwork(network);
 					setContract(contract);
 					setNetworkName(await web3.eth.net.getNetworkType());
@@ -76,6 +71,10 @@ export default function MetaMaskPage() {
 
 		fetchData();
 	}, [web3.eth, setSenderAddress]);
+
+	function activateMenu() {
+		window.ethereum.request({ method: 'eth_requestAccounts' });
+	}
 
 	async function checkBalance() {
 		let senderBalance = 0;
@@ -175,11 +174,18 @@ export default function MetaMaskPage() {
 				<Col>
 					<div>{networkName}</div>
 					<div>{ERC20Contract.networks[network]?.address}</div>
-					<h1>{tokenName} Token </h1>
+					<h1>{tokenName} Token</h1>
 				</Col>
 			</Row>
 			<Row>
-				<Col>{message && <b>{message}</b>}</Col>
+				<Col md={9}>
+					<b>{message}</b>
+				</Col>
+				<Col md={3} className="mb-2">
+					<Button variant="secondary" onClick={activateMenu} block>
+						Activate MetaMask
+					</Button>
+				</Col>
 			</Row>
 
 			<Form>
@@ -279,24 +285,7 @@ export default function MetaMaskPage() {
 					</Col>
 				</Row>
 			</Form>
-			<Row className="mt-4">
-				<h1>History</h1>
-				<div>
-					<ul>
-						{events.map((event) => (
-							<li key={event.id}>
-								{event.event} from{' '}
-								{event.returnValues.from ||
-									event.returnValues.owner}{' '}
-								to{' '}
-								{event.returnValues.to ||
-									event.returnValues.spender}
-								, Value: {event.returnValues.value}
-							</li>
-						))}
-					</ul>
-				</div>
-			</Row>
+			<History contract={contract} />
 		</>
 	);
 }
